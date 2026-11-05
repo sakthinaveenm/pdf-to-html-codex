@@ -1,0 +1,17 @@
+[project]
+name = "multilingual-pdf-to-html"
+version = "0.1.0"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+ "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic>=2.10,<3",
+ "pydantic-settings>=2.7,<3", "sqlalchemy>=2.0,<3", "alembic>=1.14,<2",
+ "python-multipart>=0.0.20", "pypdf>=5,<7", "pdfplumber>=0.11,<0.12",
+ "pypdfium2>=4.30,<5", "beautifulsoup4>=4.13,<5", "lxml>=5,<7",
+ "nh3>=0.2.21,<1", "pillow>=13,<14", "psutil>=7,<8", "httpx>=0.28,<1",
+]
+[project.optional-dependencies]
+test = ["pytest>=9.0.3,<10", "reportlab>=4,<5"]
+docling = ["docling==2.147.0", "transformers>=5.12.1,<6"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

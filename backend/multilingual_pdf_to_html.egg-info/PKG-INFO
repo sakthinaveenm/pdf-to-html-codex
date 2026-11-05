@@ -1,0 +1,27 @@
+Metadata-Version: 2.4
+Name: multilingual-pdf-to-html
+Version: 0.1.0
+Requires-Python: <3.12,>=3.11
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: uvicorn<1,>=0.34
+Requires-Dist: pydantic<3,>=2.10
+Requires-Dist: pydantic-settings<3,>=2.7
+Requires-Dist: sqlalchemy<3,>=2.0
+Requires-Dist: alembic<2,>=1.14
+Requires-Dist: python-multipart>=0.0.20
+Requires-Dist: pypdf<7,>=5
+Requires-Dist: pdfplumber<0.12,>=0.11
+Requires-Dist: pypdfium2<5,>=4.30
+Requires-Dist: beautifulsoup4<5,>=4.13
+Requires-Dist: lxml<7,>=5
+Requires-Dist: nh3<1,>=0.2.21
+Requires-Dist: pillow<12,>=10
+Requires-Dist: psutil<8,>=7
+Requires-Dist: httpx<1,>=0.28
+Provides-Extra: test
+Requires-Dist: pytest<9,>=8; extra == "test"
+Requires-Dist: reportlab<5,>=4; extra == "test"
+Provides-Extra: marker
+Requires-Dist: marker-pdf==1.10.1; extra == "marker"
+Provides-Extra: docling
+Requires-Dist: docling==2.60.1; extra == "docling"

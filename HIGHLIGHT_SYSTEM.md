@@ -1,0 +1,9 @@
+# Persistent highlights
+
+Annotations combine revision, block IDs, exact quote with up to 32 codepoints of prefix/suffix context, codepoint start/end and validated color. The text stream concatenates textContent of blocks in reading order, without synthetic separators. Python string indexing matches this codepoint model. JavaScript DOM Range offsets use UTF-16; conversion helpers reject split surrogate pairs and translate precisely. Intl.Segmenter expands selections to grapheme boundaries where available; older WebViews lacking Segmenter cannot guarantee expansion for all Indic/emoji clusters.
+
+Selection works through inline formatting and across paragraphs. CSS Custom Highlight API paints ranges without changing content. The fallback splits text nodes into mark wrappers and removes/normalizes them before every repaint; it never extracts or merges paragraph nodes. Overlapping highlights persist independently; fallback overlap color uses the first matching annotation. Removal/color changes rerender all annotations. Search uses Custom Highlight where supported; fallback browsers scroll to matches and report counts but do not paint search matches.
+
+Restoration first validates position against quote within the same revision. After editing, it requires a unique exact quote satisfying context. Ambiguous/missing matches become unresolved. The application deliberately avoids fuzzy matching that might move educational annotations onto incorrect text. Re-anchoring occurs on the server during revision save and in the reader during restoration.
+
+This small adapter follows text-position/text-quote techniques evaluated in Hypothesis. No Hypothesis code was copied and no hosted annotation service is used. See docs/OPEN_SOURCE_EVALUATION.md for the comparison and reasons to retain the adapter. Annotation rendering never changes exported canonical HTML.

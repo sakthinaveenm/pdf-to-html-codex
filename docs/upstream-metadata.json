@@ -1,0 +1,117 @@
+{
+  "reviewDate": "2026-11-05",
+  "projects": [
+    {
+      "project": "datalab-to/marker",
+      "url": "https://github.com/datalab-to/marker",
+      "pushedAt": "2026-10-29T18:11:14Z",
+      "archived": false,
+      "license": "Apache-2.0",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "docling-project/docling",
+      "url": "https://github.com/docling-project/docling",
+      "pushedAt": "2026-11-05T13:06:23Z",
+      "archived": false,
+      "license": "MIT",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "opendatalab/MinerU",
+      "url": "https://github.com/opendatalab/MinerU",
+      "pushedAt": "2026-11-04T17:55:23Z",
+      "archived": false,
+      "license": "NOASSERTION",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "pdf2htmlEX/pdf2htmlEX",
+      "url": "https://github.com/pdf2htmlEX/pdf2htmlEX",
+      "pushedAt": "2025-07-17T13:00:10Z",
+      "archived": false,
+      "license": "NOASSERTION",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "mozilla/pdf.js",
+      "url": "https://github.com/mozilla/pdf.js",
+      "pushedAt": "2026-11-05T11:40:00Z",
+      "archived": false,
+      "license": "Apache-2.0",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "tesseract-ocr/tesseract",
+      "url": "https://github.com/tesseract-ocr/tesseract",
+      "pushedAt": "2026-11-02T18:20:18Z",
+      "archived": false,
+      "license": "Apache-2.0",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "tesseract-ocr/tessdata",
+      "url": "https://github.com/tesseract-ocr/tessdata",
+      "pushedAt": "2024-03-09T10:04:28Z",
+      "archived": false,
+      "license": "Apache-2.0",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "ueberdosis/tiptap",
+      "url": "https://github.com/ueberdosis/tiptap",
+      "pushedAt": "2026-11-05T13:44:25Z",
+      "archived": false,
+      "license": "MIT",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "ProseMirror/prosemirror-view",
+      "url": "https://github.com/ProseMirror/prosemirror-view",
+      "pushedAt": "2026-04-01T16:43:28Z",
+      "archived": true,
+      "license": "MIT",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "hypothesis/client",
+      "url": "https://github.com/hypothesis/client",
+      "pushedAt": "2026-10-19T20:09:12Z",
+      "archived": false,
+      "license": "NOASSERTION",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "react-native-webview/react-native-webview",
+      "url": "https://github.com/react-native-webview/react-native-webview",
+      "pushedAt": "2026-11-04T02:11:40Z",
+      "archived": false,
+      "license": "MIT",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "messense/nh3",
+      "url": "https://github.com/messense/nh3",
+      "pushedAt": "2026-10-27T00:11:46Z",
+      "archived": false,
+      "license": "MIT",
+      "defaultBranch": "main"
+    },
+    {
+      "project": "lxml/lxml",
+      "url": "https://github.com/lxml/lxml",
+      "pushedAt": "2026-11-05T11:47:19Z",
+      "archived": false,
+      "license": "BSD-3-Clause",
+      "defaultBranch": "master"
+    },
+    {
+      "project": "jsvine/pdfplumber",
+      "url": "https://github.com/jsvine/pdfplumber",
+      "pushedAt": "2026-10-15T01:46:06Z",
+      "archived": false,
+      "license": "MIT",
+      "defaultBranch": "stable"
+    }
+  ]
+}

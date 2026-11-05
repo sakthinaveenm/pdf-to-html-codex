@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+dist/
+storage/*
+!storage/.gitkeep
+.env
+*.log
+playwright-report/
+test-results/
+.venv*/
+backend/.venv/
+engines/marker/.venv/
+*.tsbuildinfo

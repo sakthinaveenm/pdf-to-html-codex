@@ -1,0 +1,6 @@
+pyproject.toml
+multilingual_pdf_to_html.egg-info/PKG-INFO
+multilingual_pdf_to_html.egg-info/SOURCES.txt
+multilingual_pdf_to_html.egg-info/dependency_links.txt
+multilingual_pdf_to_html.egg-info/requires.txt
+multilingual_pdf_to_html.egg-info/top_level.txt
