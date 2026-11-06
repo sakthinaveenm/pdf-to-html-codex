@@ -12,7 +12,7 @@ Interactive specification: `http://127.0.0.1:8000/docs`. Machine schema: `/opena
 | GET | `/api/v1/jobs/{id}/original` | Original PDF |
 | GET | `/api/v1/documents/{id}` | Latest canonical document |
 | GET | `/api/v1/documents/{id}/ast` | Same versioned canonical JSON |
-| GET | `/api/v1/documents/{id}/html?fragment=false` | Full semantic HTML or editor fragment |
+| GET | `/api/v1/documents/{id}/html?fragment=false&standalone=false` | Full semantic HTML or editor fragment; standalone=true embeds base64 images |
 | PUT | `/api/v1/documents/{id}/revisions` | `{baseRevision, html}`; stale base returns 409 |
 | GET | `/api/v1/documents/{id}/assets/{assetId}` | Registered local raster asset |
 | GET | `/api/v1/documents/{id}/quality` | Structural diagnostics |
@@ -32,3 +32,26 @@ curl -o document.zip 'http://127.0.0.1:8000/api/v1/documents/DOCUMENT_ID/export?
 ```
 
 Capability `installed` means the dependency is present, not that all model files have been downloaded or a GPU fits. Persistent job errors distinguish these conditions. Configuration is environment-based and requires restart; there is no runtime worker-settings API.
+
+`GET /documents/{id}/html?fragment=true&standalone=true` returns one copyable HTML fragment containing all pages and embedded base64 images. `export?format=html` downloads one self-contained file named after the PDF. Missing/unregistered assets return 409 rather than silently exporting broken images.
+
+`DELETE /api/v1/documents/{id}` (also `DELETE /api/v1/jobs/{id}`) permanently removes a completed, failed or canceled document, its original PDF, generated files, revisions, highlights and temporary logs. Returns 204, 404 if absent, or 409 while conversion/cleanup is active. Files are staged before the database commit so failed deletions can restore them; interrupted cleanup/recovery is retried at startup.
+
+## Primary book/page workflow
+
+Existing `/documents` endpoints remain compatibility utilities. Upload books through `POST /api/v1/jobs`; use these page APIs for UEducate digitization:
+
+| Method | Path under `/api/v1` | Purpose |
+| --- | --- | --- |
+| GET | `/books/{id}/pages` | Total, ready/failed counts and independent page status/progress |
+| GET | `/books/{id}/pages/{n}` | Page metadata and current AST/revision |
+| GET | `/books/{id}/pages/{n}/html` | Editor-ready fragment; `format=standalone` for complete offline HTML |
+| PUT | `/books/{id}/pages/{n}/revisions` | Save `{baseRevision, html}`; stale revision returns 409 |
+| POST | `/books/{id}/pages/{n}/reset` | Restore converted baseline as a new revision |
+| POST | `/books/{id}/pages/{n}/reconvert` | Queue only this page; corrected pages require `{overwriteEdits:true}` |
+| GET | `/books/{id}/pages/{n}/export` | `format=html`, `snippet` or `zip` |
+| GET | `/books/{id}/export` | Per-page book ZIP; optional `pages=1,2,5` |
+
+Snippet/export requests accept `image_mode=embedded` (default) or `image_mode=url&asset_base_url=https://destination.example/assets/book`. The asset manifest gives destination filenames; upload assets there before pasting URL-based snippets. Standalone HTML always embeds images/fonts. Copy snippets contain no document wrappers, scripts or stylesheet dependency. `Options.font_mapping` maps a detected font name (or `*`) to `serif`, `sans-serif` or `monospace` before conversion.
+
+A book can be `PARTIAL`: successful pages remain usable and failed pages can be retried independently. No converter API automatically uploads content to UEducate.

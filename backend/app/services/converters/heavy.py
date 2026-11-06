@@ -1,3 +1,4 @@
+from app.helpers.runtime import interpreter_path
 import importlib.util
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -12,7 +13,7 @@ class MarkerConverter(PDFConverter):
         if settings.marker_python:
             import subprocess
             try:
-                result = subprocess.run([str(Path(settings.marker_python).resolve()),'-c',
+                result = subprocess.run([interpreter_path(settings.marker_python),'-c',
                     'import importlib.util; raise SystemExit(0 if importlib.util.find_spec("marker") else 1)'],
                     capture_output=True, timeout=5)
                 return result.returncode == 0
@@ -22,8 +23,13 @@ class MarkerConverter(PDFConverter):
         from marker.converters.pdf import PdfConverter
         from marker.models import create_model_dict
         from app.config.settings import settings
-        converter = PdfConverter(artifact_dict=create_model_dict(device=settings.device), renderer='marker.renderers.html.HTMLRenderer',
-                                 config={'use_llm':False,'force_ocr':options.force_ocr,'paginate_output':True})
+        force=options.force_ocr or any(p['classification']=='TEXT_ENCODING_PROBLEM' for p in document.pages)
+        key=(settings.device,force)
+        if not hasattr(self,'_models'):self._models=create_model_dict(device=settings.device)
+        if getattr(self,'_converter_key',None)!=key:
+            self._converter=PdfConverter(artifact_dict=self._models,renderer='marker.renderers.html.HTMLRenderer',config={'use_llm':False,'force_ocr':force,'paginate_output':True})
+            self._converter_key=key
+        converter=self._converter
         rendered = converter(str(path))
         source = BeautifulSoup(rendered.html,'html.parser')
         for index, (name,image) in enumerate(rendered.images.items()):
@@ -54,12 +60,35 @@ class DoclingConverter(PDFConverter):
         from docling.datamodel.accelerator_options import AcceleratorOptions, AcceleratorDevice
         from docling_core.types.doc import ImageRefMode
         pipeline = PdfPipelineOptions()
-        pipeline.do_ocr = options.force_ocr or any(p['classification'] in ('SCANNED_IMAGE','TEXT_ENCODING_PROBLEM') for p in document.pages)
-        pipeline.ocr_options = TesseractCliOcrOptions(lang=options.languages,force_full_page_ocr=options.force_ocr)
+        pipeline.do_ocr = options.force_ocr or any(p.get('requiresOCR',False) or p['classification'] in ('SCANNED_IMAGE','TEXT_ENCODING_PROBLEM') for p in document.pages)
+        ocr_languages=options.languages
+        if 'auto' in ocr_languages:
+            ocr_languages=['eng']
+            if pipeline.do_ocr:
+                import pypdfium2 as pdfium
+                from app.services.ocr.service import OCRService
+                detected=[]
+                pdf=pdfium.PdfDocument(path)
+                try:
+                    for info in document.pages:
+                        if not options.force_ocr and not info.get('requiresOCR',False) and info['classification'] not in ('SCANNED_IMAGE','TEXT_ENCODING_PROBLEM'):continue
+                        image=pdf[info['page']-1].render(scale=options.dpi/72).to_pil()
+                        try:codes,warning=OCRService().resolve_languages(image,['auto'],info.get('ocrLanguageHint'))
+                        finally:image.close()
+                        detected.extend(code for code in codes if code not in detected)
+                        info['ocrLanguages']=codes
+                        if warning:document.warnings.append(f"Page {info['page']}: {warning}")
+                finally:pdf.close()
+                if detected:ocr_languages=detected
+        pipeline.ocr_options = TesseractCliOcrOptions(lang=ocr_languages,force_full_page_ocr=options.force_ocr or any(p['classification']=='TEXT_ENCODING_PROBLEM' for p in document.pages))
         from app.config.settings import settings
         pipeline.accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CUDA if settings.device=='cuda' else AcceleratorDevice.CPU)
         pipeline.generate_picture_images = True
-        converted = DocumentConverter(format_options={InputFormat.PDF:PdfFormatOption(pipeline_options=pipeline)}).convert(path)
+        key=(tuple(ocr_languages),pipeline.do_ocr,pipeline.ocr_options.force_full_page_ocr,settings.device)
+        if getattr(self,'_converter_key',None)!=key:
+            self._converter=DocumentConverter(format_options={InputFormat.PDF:PdfFormatOption(pipeline_options=pipeline)})
+            self._converter_key=key
+        converted = self._converter.convert(path)
         # Page-filtered serialization preserves native text, tables and provenance.
         import base64
         import io
@@ -74,5 +103,43 @@ class DoclingConverter(PDFConverter):
                 with Image.open(io.BytesIO(raw)) as image: image.save(output/'assets'/asset)
                 node['src'] = 'assets/'+asset
                 document.assets.append({'assetId':asset,'path':'assets/'+asset,'sourcePage':page_no})
+            page_info=next((page for page in document.pages if page['page']==page_no),{})
+            visible=source.get_text(' ',strip=True)
+            hint=page_info.get('ocrLanguageHint')
+            expected_range=(0x900,0x97f) if hint in ('hin','nep') else (0xb80,0xbff) if hint=='tam' else None
+            missing_script=bool(expected_range and sum(expected_range[0]<=ord(char)<=expected_range[1] for char in visible)<5)
+            if page_info.get('requiresOCR') and (len(visible)<8 or missing_script):
+                # Layout models can classify a decorative title page as one picture.
+                # Recover its actual text instead of presenting the picture as selectable HTML.
+                import pypdfium2 as pdfium
+                import html
+                from app.services.ocr.service import OCRService
+                pdf=pdfium.PdfDocument(path)
+                try:
+                    image=pdf[page_no-1].render(scale=max(options.dpi,300)/72).to_pil()
+                    try:
+                        codes,warning=OCRService().resolve_languages(image,options.languages,hint)
+                        regions=OCRService().recognize_layout(image,codes,max(options.dpi,300)/72)
+                    finally:image.close()
+                finally:pdf.close()
+                import pdfplumber
+                from app.services.html.source_layout import is_title_page,cover_html
+                from app.services.ocr.layout import region_markup,align_regions_to_page
+                with pdfplumber.open(path) as pdf:
+                    original=pdf.pages[page_no-1]
+                    regions=align_regions_to_page(regions,original)
+                    title_page=is_title_page(original)
+                    paragraphs=cover_html(original,regions,path,output,document.assets) if title_page else ''.join(region_markup(region,original,cover=False) for region in regions)
+                if title_page:
+                    source=BeautifulSoup('','html.parser')
+                for node in list(source.select('p,h1,h2,h3,h4,h5,h6,ul,ol,table,blockquote,pre')):
+                    if node.parent is not None and not node.find('img'):node.decompose()
+                source=BeautifulSoup(paragraphs+str(source),'html.parser')
+                page_info['textSource']='ocr-recovery'
+                page_info['ocrLanguages']=codes
+                document.warnings.append(f'Page {page_no}: recovered selectable text from a region classified as an image; review reading order.')
+                if warning:document.warnings.append(f'Page {page_no}: {warning}')
             document.blocks.extend(HTMLNormalizationService().blocks(str(source),document.documentId,page_no,self.name,options.language,len(document.blocks)))
+        referenced={str(image.get('src','')) for block in document.blocks for image in BeautifulSoup(block.content,'html.parser').find_all('img')}
+        document.assets=[asset for asset in document.assets if asset['path'] in referenced]
         return document

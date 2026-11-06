@@ -1,6 +1,6 @@
 # Installation
 
-Use Python 3.11 and Node 22 or newer. Commands assume the repository root. `uv.lock` files and `frontend/package-lock.json` pin dependencies. Prefer `uv sync --locked` and `npm ci` for reproduction.
+Use Python 3.11 and Node 24 or newer. Commands assume the repository root. `uv.lock` files and `frontend/package-lock.json` pin dependencies. Prefer `uv sync --locked` and `npm ci` for reproduction.
 
 ```sh
 uv python install 3.11
@@ -50,3 +50,15 @@ PYTHONPATH=backend backend/.venv/bin/alembic -c backend/alembic.ini upgrade head
 ```
 
 Back up `storage/jobs.sqlite` and document directories together before future migrations. Dockerfile provides an optional API-only container; run the frontend separately and mount `/data`. Do not use Uvicorn `--workers` with this queue design.
+
+## Automatic launchers
+
+The recommended entrypoints are `start-macos.command` and `start-windows.cmd` at the repository root. See README for optional arguments. Shared setup/supervision lives in `scripts/start.py`; Windows prerequisite installation lives in `scripts/start-windows.ps1`.
+
+Each fresh start runs a locked uv synchronization, verifies imports and dependency compatibility, checks frontend dependency integrity and performs a real production build. Failed package verification triggers one reinstall attempt, then a visible error. Verified frontend installs are cached by lockfile/package/Node-version fingerprint. Server readiness is checked through the API and HTML endpoint before the browser opens. Ctrl+C stops only the servers owned by the launcher; failed startup also cleans them up.
+
+Missing OCR language packs are downloaded from the official, fixed tessdata_fast 4.1.0 release into `.launcher/tessdata`, leaving system packs untouched. TESSDATA_PREFIX is set for launcher child processes when those local packs are used. A blank-image OCR command verifies that the requested weights actually load. Inherited TESSDATA_PREFIX values are respected when checking existing packs. Initial installers require internet; permissions/UAC or missing WinGet/Homebrew prerequisites can require OS interaction. The automatic launcher installs the isolated Marker profile unless --skip-marker or --lightweight is used. Its separate license/security considerations still apply.
+
+Launcher checks: `python3 -m unittest discover -s scripts/tests -v`. Windows execution is unverified on this macOS host; Windows command invocation is separately covered by a path-with-spaces test.
+
+For the optional higher-accuracy Hindi OCR model, run `python3 scripts/install_ocr_best.py` from the project root. This installs a pinned, checksum-verified local model into `storage/models/tessdata_best`; for a custom PDF_STORAGE, pass that storage's `models/tessdata_best` path as the script argument. Without it, conversion uses installed system packs. FontTools/uharfbuzz glyph sizing dependencies are installed automatically from the locked backend/Marker environments.

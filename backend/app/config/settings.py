@@ -16,5 +16,9 @@ class Settings(BaseSettings):
 
 settings = Settings()
 settings.storage = settings.storage.resolve()
+if not settings.marker_python:
+    import os
+    marker=Path(__file__).resolve().parents[3]/'engines'/'marker'/'.venv'/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
+    if marker.is_file():settings.marker_python=str(marker.absolute())
 for folder in ('originals', 'documents', 'tmp'):
     (settings.storage / folder).mkdir(parents=True, exist_ok=True)

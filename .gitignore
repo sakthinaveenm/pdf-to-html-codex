@@ -13,3 +13,4 @@ test-results/
 backend/.venv/
 engines/marker/.venv/
 *.tsbuildinfo
+.launcher/

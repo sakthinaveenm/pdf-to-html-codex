@@ -57,3 +57,27 @@ Native Unicode fixture tests cover Tamil, Hindi, Telugu, Malayalam, Tamil/Englis
 ## Missing or unverified production requirements
 
 Native Android/iOS validation; GPU/4 GB VRAM benchmarks; broad real-world multilingual accuracy; robust editor round trips for every math/figure variant; hard OS resource isolation; a corpus-based engine quality comparison; all requested languages as scanned fixtures; multi-user authentication; fully streaming upload caps. Existing APIs/UI/formats remain intact. See TESTING.md and IMPLEMENTATION_REPORT.md for exact evidence.
+
+## Page-first requirement update — 2026-11-06
+
+Preserved FastAPI/SQLite, converter adapters, Tesseract, PDF.js, TipTap/ProseMirror, sanitization and annotation test utilities. Added durable page records and revision baselines rather than replacing the architecture. Existing combined HTML APIs remain for compatibility. A reused engine process converts isolated page PDFs with explicit original-page provenance; one page failure does not discard successful pages. Fresh English samples completed through both installed Marker and Docling page workers. The actual 10-page legacy Hindi textbook completed through lightweight/Tesseract, including reviewable partial progress. This is not a comparative accuracy benchmark.
+
+[Pdf2htmlEX](https://github.com/pdf2htmlEX/pdf2htmlEX) remains an evaluated option for precise fixed layout: upstream documents native positioned text and page-loading modes, and GPLv3+ licensing. It was not installed: it does not demonstrate a benefit for the primary flowing editor-snippet format, adds Poppler/FontForge packaging, and cannot repair missing Unicode mappings by geometry alone. Fixed-layout export remains deferred.
+
+[MinerU](https://github.com/opendatalab/MinerU) currently describes its custom Apache-derived MinerU Open Source License, multilingual OCR and several model backends. It remains uninstalled and unbenchmarked; no superiority claim is made. A representative multilingual book corpus and license review are needed before adding a third heavy engine.
+
+Formatting recovery uses pdfplumber source metrics plus Tesseract word/line boxes, not a new OCR engine. Local OFL Noto Serif, Devanagari and Tamil fonts support standalone output. Original PDF font embedding/ToUnicode presence and subset names are inspected; embedded proprietary fonts are not redistributed. Safe mappings are user selectable. Snippets intentionally depend on destination-installed fallback fonts; standalone pages carry font data and full OFL notices. Complex columns, source colors in OCR, equations and exact glyph metrics still require review.
+
+### Alignment/background repair
+
+Reused pypdf content-stream parsing to separate native text drawing from source graphics, including nested Form XObjects; PDFium renders the resulting graphics layer. Tesseract receives a copy with large sparse transparent decorations omitted, avoiding watermark-driven OCR fragments. Original files are unchanged. Source font metrics guide flowing paragraphs and borderless column tables; the existing HTML sanitizer and TipTap adapter retain a bounded layout vocabulary. No additional engine/dependency was installed. This graphics layer retains original opacity/gray panels and prevents black foreground watermark crops. Logo outline lettering and text already baked into figures can remain raster/vector-derived; native main text is emitted separately as DOM text. Broad automatic layout recovery remains heuristic.
+
+### Glyph sizing and missing-character follow-up
+
+FontTools and HarfBuzz (uharfbuzz) now measure actual shaped fallback-font glyph bounds. PDF nominal font em sizes are not treated as equivalent visible sizes across legacy and Unicode fonts. Per-region ink measurements replace the fixed 75% compression. This preserves text as Unicode DOM content; it does not embed the proprietary original font.
+
+A pinned optional `tessdata_best` Hindi model (4.1.0, Apache-2.0) plus 300-DPI page detection and batched 450-DPI small-print line retries improves the local OCR path. Install with `python3 scripts/install_ocr_best.py`; its downloaded model checksum and license are recorded under storage/models/tessdata_best. Other languages retain their available system models. The conversion checks for local models rather than silently downloading them during a request.
+
+Reviewed legacy converters in https://github.com/deepakkamboj/indianlanguageconverter at 12a87e365b0c2ee6e513343c0b740ac6a8c7d6d6. Their nominal Chanakya mapping does not match the ASCII-heavy Walkman variant used by this PDF, and conversion algorithm licensing includes GPLv2. No converter code or table was copied or bundled. Use calibrated fallback shaping and local OCR with source numeric/Latin/symbol recovery instead; reliable general legacy-font decoding remains a separate evaluated requirement.
+
+Spacing follow-up reuses HarfBuzz advance measurements for bounded per-line word spacing, retaining source line breaks and Unicode DOM text. No extra engine was added. The dropped-word issue was an encoding interpretation bug: a legacy font's `•` code is not necessarily a bullet. Only actual Unicode/symbol-font markers now control list generation. TipTap TextStyle preserves the spacing styles during editing.

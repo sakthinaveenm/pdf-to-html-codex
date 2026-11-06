@@ -18,4 +18,10 @@ The reusable TypeScript reader compiles to an offline IIFE. The same bundle runs
 
 Sanitize every converter result and editor save with nh3; permit local raster assets only. Original PDFs are previewed through PDF.js in the web application. Random storage names and database lookups prevent arbitrary filesystem access. Origin checks and restrictive CORS protect the local API. Exported content has a restrictive CSP. Models perform local inference; initial artifact downloads need network access.
 
-This is a local application, not a multi-user server. Before exposure beyond loopback add authentication, rate limiting, a streaming reverse-proxy body limit, OS/container sandboxing, hardened deployment and a dependency/model license review. Process RSS polling is not a hard OS memory sandbox. Filesystem snapshots and database commits are not one atomic cross-resource transaction; the database remains authoritative. No source deletion API is exposed.
+This is a local application, not a multi-user server. Before exposure beyond loopback add authentication, rate limiting, a streaming reverse-proxy body limit, OS/container sandboxing, hardened deployment and a dependency/model license review. Process RSS polling is not a hard OS memory sandbox. Filesystem snapshots and database commits are not one atomic cross-resource transaction; the database remains authoritative. Terminal documents can be deleted through the API. Their files are staged before the database commit; startup restores uncommitted stages and purges committed deletions.
+
+## Requirement revision: page-first UEducate workflow
+
+The primary content unit is now a book page, not an all-pages HTML blob. Book jobs retain their existing IDs and source PDFs. Durable page records and page revisions own conversion status, generated baselines, manual corrections and diagnostics. The existing full-document model is maintained as a compatibility aggregate.
+
+The primary UI is one source PDF page beside one converted HTML page, with navigation and copy actions inline. Editor-ready fragments have inline styles and no document wrappers, stylesheets or scripts. Standalone pages may contain licensed embedded fonts and offline assets. No UEducate student/LMS backend is added; the existing reader/highlight implementation is retained only for compatibility validation.

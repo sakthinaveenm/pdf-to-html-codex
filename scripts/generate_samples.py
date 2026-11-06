@@ -15,3 +15,8 @@ font=ImageFont.truetype(font_path,50) if Path(font_path).exists() else ImageFont
 draw.text((70,80),'Scanned English document',font=font,fill='black');draw.text((70,180),'Real OCR makes this text selectable.',font=font,fill='black')
 c=Canvas(str(root/'scanned-english.pdf'),pagesize=(700,200));c.drawImage(ImageReader(image),0,0,700,200);c.save()
 print(root)
+# A small figure with native text for single-file/base64 and editor round trips.
+c=Canvas(str(root/'digital-image.pdf'))
+c.drawString(50,750,'First page with an embedded figure')
+c.drawImage(ImageReader(Image.new('RGB',(60,30),'green')),50,600,180,90)
+c.showPage();c.drawString(50,750,'Second page remains editable');c.save()

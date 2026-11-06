@@ -45,3 +45,28 @@ def initialize() -> None:
     with engine.connect() as conn:
         conn.execute(text('PRAGMA journal_mode=WAL'))
     Base.metadata.create_all(engine)
+
+class BookPage(Base):
+    __tablename__ = 'book_pages'
+    book_id: Mapped[str] = mapped_column(String,primary_key=True)
+    number: Mapped[int] = mapped_column(Integer,primary_key=True)
+    status: Mapped[str] = mapped_column(String,default='QUEUED')
+    progress: Mapped[int] = mapped_column(Integer,default=0)
+    engine: Mapped[str | None] = mapped_column(String,nullable=True)
+    error: Mapped[str | None] = mapped_column(Text,nullable=True)
+    ast: Mapped[str | None] = mapped_column(Text,nullable=True)
+    generated_ast: Mapped[str | None] = mapped_column(Text,nullable=True)
+    quality: Mapped[str | None] = mapped_column(Text,nullable=True)
+    revision: Mapped[int] = mapped_column(Integer,default=1)
+    edited: Mapped[bool] = mapped_column(default=False)
+    overwrite_edits: Mapped[bool] = mapped_column(default=False)
+    updated_at: Mapped[str] = mapped_column(String,default=now)
+    duration: Mapped[float | None] = mapped_column(Float,nullable=True)
+
+class PageRevision(Base):
+    __tablename__ = 'page_revisions'
+    book_id: Mapped[str] = mapped_column(String,primary_key=True)
+    page: Mapped[int] = mapped_column(Integer,primary_key=True)
+    number: Mapped[int] = mapped_column(Integer,primary_key=True)
+    ast: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String,default=now)

@@ -27,8 +27,12 @@ def main() -> None:
     stage = settings.storage/'tmp'/f'{job_id}.stage.json'
     write_json(stage,{'status':'INSPECTING','progress':10})
     started = time.monotonic()
-    report = PDFInspectionService().inspect(path)
-    write_json(stage,{'status':'OCR_PROCESSING' if options.force_ocr or any(p['classification']=='SCANNED_IMAGE' for p in report['pages']) else 'CONVERTING','progress':25,'report':report})
+    report = request.get('inspection') or PDFInspectionService().inspect(path)
+    if engine_name == 'INSPECT':
+        write_json(output/'inspection.json',report)
+        write_json(stage,{'status':'INSPECTING','progress':15,'report':report})
+        return
+    write_json(stage,{'status':'OCR_PROCESSING' if options.force_ocr or any(p.get('requiresOCR',False) or p['classification']=='SCANNED_IMAGE' for p in report['pages']) else 'CONVERTING','progress':25,'report':report})
     doc = Document(documentId=job_id,sourceFileName=request['filename'],sourceChecksum=hashlib.sha256(path.read_bytes()).hexdigest(),
                    title=Path(request['filename']).stem,language=options.language,pages=report['pages'],warnings=report['warnings'])
     if engine_name == 'MARKER':

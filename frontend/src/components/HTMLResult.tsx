@@ -1,0 +1,9 @@
+import {useEffect,useRef,useState} from 'react';
+import {api,errorMessage} from '../services/api';
+import {copyHTML,copyFormattedHTML} from '../helpers/clipboard';
+export function HTMLResult({id,revision,pages}:{id:string;revision:number;pages:number}){
+ const [source,setSource]=useState('');const [error,setError]=useState('');const [status,setStatus]=useState('');const area=useRef<HTMLTextAreaElement>(null);
+ useEffect(()=>{let active=true;setSource('');setError('');setStatus('');void api.get<string>(`/documents/${id}/html?fragment=true&standalone=true`).then(r=>{if(active)setSource(r.data);}).catch(e=>{if(active)setError(errorMessage(e));});return()=>{active=false;};},[id,revision]);
+ async function copy(formatted=false){try{if(formatted)await copyFormattedHTML(source);else await copyHTML(source);setStatus(formatted?'Formatted content copied. Paste it into your rich-text editor.':'HTML code copied. Paste it into your editor’s HTML/source mode.');setError('');}catch(e){setError(errorMessage(e));}}
+ return <section className="html-result" aria-label={`HTML for all ${pages} pages`}><h2>HTML</h2><div className="toolbar"><button className="primary" disabled={!source} onClick={()=>void copy()}>Copy HTML code</button><button disabled={!source} onClick={()=>void copy(true)}>Copy content</button><a className="button" href={`/api/v1/documents/${id}/export?format=html`} aria-label="Download single HTML file">Download</a></div>{status&&<p className="copy-success" role="status">{status}</p>}{error&&<p className="error" role="alert">{error}</p>}<label className="sr-only" htmlFor="converted-html-source">HTML code — ready to paste into your editor</label><textarea ref={area} id="converted-html-source" className="html-source" value={source} readOnly spellCheck={false} placeholder="Preparing all pages as one HTML result…"/></section>;
+}

@@ -1,13 +1,34 @@
 from typing import Literal, Any
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class Options(BaseModel):
     model_config = ConfigDict(extra='forbid')
     engine: Literal['AUTO', 'MARKER', 'DOCLING', 'LIGHTWEIGHT'] = 'AUTO'
-    languages: list[str] = Field(default_factory=lambda: ['eng'], min_length=1, max_length=20)
+    languages: list[str] = Field(default_factory=lambda: ['auto'], min_length=1, max_length=20)
     force_ocr: bool = False
     language: str = Field('und', pattern=r'^[a-zA-Z0-9-]{2,35}$')
     dpi: int = Field(200, ge=100, le=300)
+    font_mapping: dict[str,Literal['serif','sans-serif','monospace']] = Field(default_factory=dict,max_length=100)
+
+    @field_validator('languages')
+    @classmethod
+    def validate_languages(cls, values: list[str]) -> list[str]:
+        import re
+        normalized=[]
+        for value in values:
+            value=value.strip()
+            if value.lower() in ('any','automatic','auto','all'): value='auto'
+            if not re.fullmatch(r'(?:script/)?[A-Za-z0-9_]+',value):
+                raise ValueError('Use auto or Tesseract language/script codes, such as eng, tam, vie, script/Arabic.')
+            if value not in normalized:normalized.append(value)
+        if 'auto' in normalized and len(normalized)>1:
+            raise ValueError('Use auto alone, or specify language codes explicitly.')
+        return normalized
+
+    @field_validator('language',mode='before')
+    @classmethod
+    def automatic_document_language(cls,value):
+        return 'und' if isinstance(value,str) and value.lower().strip() in ('any','auto','automatic','') else value
 
 class Block(BaseModel):
     blockId: str

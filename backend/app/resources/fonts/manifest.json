@@ -1,0 +1,42 @@
+[
+  {
+    "name": "noto-serif",
+    "source": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserif/NotoSerif%5Bwdth%2Cwght%5D.ttf",
+    "commit": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
+    "sourceSHA256": "4d8e6761424656867019081a1a01336f3cb086982682698714054fc33f782713",
+    "license": "SIL Open Font License 1.1",
+    "licenseSource": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserif/OFL.txt",
+    "woff2SHA256": "2cea057201458ca59969cd2904430ce603fe9c35f4527d90734b524f807b25b8",
+    "bytes": 452924
+  },
+  {
+    "name": "noto-serif-italic",
+    "source": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserif/NotoSerif-Italic%5Bwdth%2Cwght%5D.ttf",
+    "commit": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
+    "sourceSHA256": "e87acbc6c0efd0d9a20d6a8cbbda2b266c14be3a3a6f5af8ec9d7b2460570ad1",
+    "license": "SIL Open Font License 1.1",
+    "licenseSource": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserif/OFL.txt",
+    "woff2SHA256": "e7db0edb34ea9243e1b2d0c97616ae7a448874c0f91275aee44cbeedc14916ce",
+    "bytes": 580820
+  },
+  {
+    "name": "noto-serif-devanagari",
+    "source": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserifdevanagari/NotoSerifDevanagari%5Bwdth%2Cwght%5D.ttf",
+    "commit": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
+    "sourceSHA256": "1191e07bfeb062d80e252eb85b0eafdfbda1e350707a2a60628668e8f677dbbb",
+    "license": "SIL Open Font License 1.1",
+    "licenseSource": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoserifdevanagari/OFL.txt",
+    "woff2SHA256": "65ded268a82ddd5064e4b3d2fd63717f8919fe14f86dc9b52a3cd96c1397ea6c",
+    "bytes": 301524
+  },
+  {
+    "name": "noto-serif-tamil",
+    "source": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoseriftamil/NotoSerifTamil%5Bwdth%2Cwght%5D.ttf",
+    "commit": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
+    "sourceSHA256": "4b10fe56ee22907a80136c16dbe386ee20f3bf116332b35128bb35eeb775d91e",
+    "license": "SIL Open Font License 1.1",
+    "licenseSource": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notoseriftamil/OFL.txt",
+    "woff2SHA256": "6d4ad447e8f6341d0f21cdacb1668ae831b54db53e366cfa267222ff2b93b3e7",
+    "bytes": 184788
+  }
+]

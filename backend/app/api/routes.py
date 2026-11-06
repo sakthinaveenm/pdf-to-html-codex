@@ -9,11 +9,12 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlalchemy import select, func, update
 from app.config.settings import settings
-from app.db.database import Session, Job, Revision, Annotation, now
+from app.db.database import Session, Job, Revision, Annotation, BookPage, now
 from app.schemas.document import Options, Document, RevisionInput, Highlight, HighlightPatch
 from app.services.html.service import HTMLGenerationService, HTMLNormalizationService, safe_asset, document_text
 from app.services.annotations.service import resolve
 from app.services.export.service import archive
+from app.services.export.standalone import standalone_html
 from app.services.converters.heavy import MarkerConverter, DoclingConverter
 from app.services.ocr.service import OCRService
 from app.workers.convert import write_json
@@ -46,7 +47,7 @@ def capabilities():
         result=subprocess.run(['nvidia-smi','--query-gpu=name,memory.total','--format=csv,noheader'],capture_output=True,text=True,timeout=3,check=True)
         gpu=True; details=result.stdout.strip()
     except (OSError,subprocess.SubprocessError): pass
-    return {'converters':[MarkerConverter().get_capabilities(),DoclingConverter().get_capabilities(),{'name':'LIGHTWEIGHT','installed':True}],
+    return {'features':{'deleteDocuments':True},'converters':[MarkerConverter().get_capabilities(),DoclingConverter().get_capabilities(),{'name':'LIGHTWEIGHT','installed':True}],
             'ocr':{'engine':'tesseract','languages':OCRService.languages()},'gpu':{'available':gpu,'details':details},
             'settings':{'workers':settings.workers,'device':settings.device,'memoryMB':settings.memory_mb,'maxUploadMB':settings.max_upload_mb,'maxPages':settings.max_pages,'timeoutSeconds':settings.timeout_seconds}}
 
@@ -89,14 +90,22 @@ def jobs(offset: int=Query(0,ge=0),limit: int=Query(50,ge=1,le=200)):
 def job(identity: str):
     with Session() as db: return job_json(get_job(db,identity))
 
+@router.delete('/jobs/{identity}',status_code=204)
+@router.delete('/documents/{identity}',status_code=204)
+def remove_document(identity: str):
+    from app.services.documents.deletion import delete_document
+    try:delete_document(identity)
+    except OSError as exc:raise HTTPException(500,'Could not delete document files. Close any programs using them and try again.') from exc
+
 @router.post('/jobs/{identity}/cancel')
 def cancel(identity: str):
     with Session.begin() as db:
         # Acquire writer lock before reading so a completion cannot race cancellation.
         db.execute(update(Job).where(Job.id==identity).values(updated_at=now()))
         value=get_job(db,identity)
-        if value.status in ('COMPLETED','FAILED','CANCELED'): raise HTTPException(409,'Job is already finished.')
+        if value.status in ('COMPLETED','PARTIAL','FAILED','CANCELED'): raise HTTPException(409,'Job is already finished.')
         value.status='CANCELED'; value.error='Canceled by user.'
+        db.execute(update(BookPage).where(BookPage.book_id==identity,BookPage.status!='COMPLETED').values(status='CANCELED'))
         return job_json(value)
 
 @router.post('/jobs/{identity}/retry')
@@ -105,7 +114,8 @@ def retry(identity: str):
     if identity in queue.active_ids: raise HTTPException(409,'Worker is still stopping this job; retry in a moment.')
     with Session.begin() as db:
         value=get_job(db,identity)
-        if value.status not in ('FAILED','CANCELED'): raise HTTPException(409,'Only failed or canceled jobs may be retried.')
+        if value.status not in ('FAILED','PARTIAL','CANCELED'): raise HTTPException(409,'Only partial, failed or canceled jobs may be retried.')
+        db.execute(update(BookPage).where(BookPage.book_id==identity,BookPage.status!='COMPLETED').values(status='QUEUED',progress=0))
         value.status='QUEUED'; value.progress=0; value.error=None; value.updated_at=now()
         return job_json(value)
 
@@ -120,10 +130,16 @@ def document(identity: str):
     with Session() as db: return get_doc(db,identity)
 
 @router.get('/documents/{identity}/html')
-def document_html(identity: str, fragment: bool=False):
+def document_html(identity: str, fragment: bool=False, standalone: bool=False):
     with Session() as db: doc=get_doc(db,identity)
+    if standalone:
+        try:
+            result=standalone_html(doc,settings.storage/'documents'/identity,fragment=fragment)
+        except ValueError as exc:
+            raise HTTPException(409,str(exc)) from exc
+        return HTMLResponse(result,headers={'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:"})
     generator=HTMLGenerationService()
-    return HTMLResponse(generator.article(doc) if fragment else generator.generate(doc),headers={'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; img-src 'self'"})
+    return HTMLResponse(generator.article(doc) if fragment else generator.generate(doc),headers={'Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src 'self'"})
 
 @router.get('/documents/{identity}/quality')
 def quality(identity: str):
@@ -146,7 +162,11 @@ def revision(identity: str, request: RevisionInput):
         doc=get_doc(db,identity)
         if doc.revision!=request.baseRevision: raise HTTPException(409,'Revision conflict; reload before saving.')
         previous={b.blockId:b for b in doc.blocks}
-        blocks=HTMLNormalizationService().blocks(request.html,identity,None,'editor',doc.language)
+        from app.services.html.embedded import import_embedded_images
+        try:
+            editor_html=import_embedded_images(request.html,settings.storage/'documents'/identity,doc.assets)
+        except ValueError as exc: raise HTTPException(422,str(exc)) from exc
+        blocks=HTMLNormalizationService().blocks(editor_html,identity,None,'editor',doc.language)
         for block in blocks:
             if block.blockId in previous:
                 old=previous[block.blockId]; block.sourcePage=old.sourcePage; block.provenance=old.provenance
@@ -156,6 +176,8 @@ def revision(identity: str, request: RevisionInput):
                 old.readingOrder=len(blocks); blocks.append(old)
                 doc.warnings.append(f'Editor could not represent {old.blockType} {old.blockId}; preserved in canonical content at the end for review.')
         doc.blocks=blocks; doc.revision+=1
+        from app.services.documents.pages import sync_combined_revision
+        sync_combined_revision(db,doc)
         doc.warnings.append('Edited revision: highlights are re-anchored conservatively. New blocks may have no source page.')
         db.add(Revision(document_id=identity,number=doc.revision,ast=doc.model_dump_json()))
         for row in db.scalars(select(Annotation).where(Annotation.document_id==identity)):
@@ -210,7 +232,12 @@ def export(identity: str, format: str=Query('zip',pattern='^(zip|html|json|asset
     folder=settings.storage/'documents'/identity
     if format in ('zip','assets'):
         return Response(archive(doc,folder,annotations,format=='assets'),media_type='application/zip',headers={'Content-Disposition':f'attachment; filename="{identity}-{format}.zip"'})
-    if format=='html': payload=HTMLGenerationService().generate(doc); mime='text/html'
+    if format=='html':
+        try: payload=standalone_html(doc,folder)
+        except ValueError as exc: raise HTTPException(409,str(exc)) from exc
+        mime='text/html'
     elif format=='json': payload=doc.model_dump_json(indent=2); mime='application/json'
     else: payload=(folder/'quality-report.json').read_text(); mime='application/json'
-    return Response(payload,media_type=mime,headers={'Content-Disposition':f'attachment; filename="{identity}.{"html" if format=="html" else "json"}"'})
+    from urllib.parse import quote
+    filename=Path(doc.sourceFileName).stem+'.html' if format=='html' else identity+'.json'
+    return Response(payload,media_type=mime,headers={'Content-Disposition':"attachment; filename*=UTF-8''"+quote(filename,safe='')})

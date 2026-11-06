@@ -13,7 +13,10 @@ from app.workers.queue import queue
 logging.basicConfig(level=logging.INFO,format='%(asctime)s %(levelname)s %(name)s %(message)s')
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    initialize(); queue.start()
+    initialize()
+    from app.services.documents.deletion import purge_deleted_files
+    purge_deleted_files()
+    queue.start()
     yield
     queue.close()
 
@@ -38,3 +41,5 @@ async def security_headers(request: Request, call_next):
     response.headers['Referrer-Policy']='no-referrer'
     return response
 app.include_router(router)
+from app.api.pages import router as page_router
+app.include_router(page_router)

@@ -1,0 +1,12 @@
+@font-face{font-family:'Folio Serif';font-style:normal;font-weight:100 900;font-stretch:62.5% 100%;font-display:swap;src:url('/fonts/noto-serif.woff2') format('woff2')}
+@font-face{font-family:'Folio Serif';font-style:italic;font-weight:100 900;font-stretch:62.5% 100%;font-display:swap;src:url('/fonts/noto-serif-italic.woff2') format('woff2')}
+@font-face{font-family:'Folio Devanagari';font-style:normal;font-weight:100 900;font-stretch:62.5% 100%;font-display:swap;src:url('/fonts/noto-serif-devanagari.woff2') format('woff2')}
+@font-face{font-family:'Folio Tamil';font-style:normal;font-weight:100 900;font-stretch:62.5% 100%;font-display:swap;src:url('/fonts/noto-serif-tamil.woff2') format('woff2')}
+.rendered-preview .tiptap.pdf-document{box-sizing:border-box;max-width:900px;margin:0 auto;padding:24px;font-family:'Folio Serif','Folio Devanagari','Folio Tamil',Georgia,'Nirmala UI',serif;font-size:16px;line-height:1.65;color:#202420;background:white;font-kerning:normal;max-height:650px;overflow:auto}
+.tiptap.pdf-document p{margin:.7rem 0;unicode-bidi:plaintext}
+.tiptap.pdf-document h1,.tiptap.pdf-document h2,.tiptap.pdf-document h3,.tiptap.pdf-document h4{font-family:inherit;font-weight:700;line-height:1.25;margin:1.2rem 0 .6rem}
+.tiptap.pdf-document h1{font-size:2.5em}.tiptap.pdf-document h2{font-size:1.75em}.tiptap.pdf-document h3{font-size:1.3em}
+.tiptap.pdf-document img{display:block;max-width:100%;height:auto;margin-inline:auto}.tiptap.pdf-document figure{margin:1rem 0}
+.tiptap.pdf-document table{border-collapse:collapse;max-width:100%;font-size:inherit}.tiptap.pdf-document th,.tiptap.pdf-document td{border:1px solid #ccd2cc;padding:.45em .65em;vertical-align:top}
+.tiptap.pdf-document pre{overflow:auto}.comparison{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.comparison>.pdf-preview,.comparison>iframe{height:75vh;min-width:0}.comparison>iframe{background:#f2f3ef}.pdf-preview{padding:16px}.comparison .pdf-preview canvas{display:block;margin:auto}.pdf-preview canvas{height:auto}
+@media(max-width:700px){.comparison{grid-template-columns:1fr}.rendered-preview .tiptap.pdf-document{padding:16px;font-size:16px}}
