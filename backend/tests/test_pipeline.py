@@ -1,4 +1,5 @@
 import io
+import os
 import json
 import time
 import zipfile
@@ -86,7 +87,7 @@ def test_ambiguous_reanchoring():
 def test_multilingual_digital(tmp_path,text):
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
-    font=Path('/System/Library/Fonts/Supplemental/Arial Unicode.ttf')
+    font=Path(os.environ.get('FONT_PATH','/System/Library/Fonts/Supplemental/Arial Unicode.ttf'))
     if not font.exists(): pytest.skip('Generated multilingual PDF fixture needs FONT_PATH pointing to a Unicode TrueType font; macOS Arial Unicode is unavailable.')
     pdfmetrics.registerFont(TTFont('UnicodeTest',str(font)))
     path=tmp_path/'language.pdf';path.write_bytes(make_pdf(text,font='UnicodeTest'))
@@ -101,7 +102,7 @@ def test_scanned_ocr(tmp_path,language):
     from PIL import Image, ImageDraw, ImageFont
     from reportlab.lib.utils import ImageReader
     if language not in OCRService.languages(): pytest.skip(f'Tesseract {language} pack is not installed.')
-    path=Path('/System/Library/Fonts/Supplemental/Arial Unicode.ttf')
+    path=Path(os.environ.get('FONT_PATH','/System/Library/Fonts/Supplemental/Arial Unicode.ttf'))
     if not path.exists(): pytest.skip('Unicode fixture font unavailable.')
     text='Real scanned English text' if language=='eng' else 'தமிழ் மொழி'
     image=Image.new('RGB',(1500,350),'white');ImageDraw.Draw(image).text((40,70),text,font=ImageFont.truetype(str(path),72),fill='black')

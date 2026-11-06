@@ -74,6 +74,16 @@
     return { id: crypto.randomUUID(), documentId, revision, blockIds: ids, quote: { exact: chars.slice(start, end).join(""), prefix: chars.slice(Math.max(0, start - 32), start).join(""), suffix: chars.slice(end, end + 32).join("") }, position: { start, end, unit: "unicode-codepoint" }, color: "#ffdf70", status: "resolved" };
   }
 
+  // ../reader/src/types.ts
+  function record(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+  function isAnnotation(value) {
+    if (!record(value) || !record(value.quote) || !record(value.position)) return false;
+    const q = value.quote, p = value.position;
+    return typeof value.id === "string" && /^[a-zA-Z0-9_-]{1,80}$/.test(value.id) && typeof value.documentId === "string" && Number.isInteger(value.revision) && Number(value.revision) > 0 && Array.isArray(value.blockIds) && value.blockIds.length > 0 && value.blockIds.every((id) => typeof id === "string") && typeof q.exact === "string" && q.exact.length > 0 && typeof q.prefix === "string" && typeof q.suffix === "string" && Number.isInteger(p.start) && Number(p.start) >= 0 && Number.isInteger(p.end) && Number(p.end) > Number(p.start) && p.unit === "unicode-codepoint" && typeof value.color === "string" && /^#[0-9a-fA-F]{6}$/.test(value.color) && (value.status === "resolved" || value.status === "unresolved");
+  }
+
   // ../reader/src/index.ts
   var root = document.querySelector("article");
   if (root) {
@@ -129,8 +139,6 @@
           cursor += length;
         }
       }
-    }, validate = function(a) {
-      return typeof a.id === "string" && typeof a.quote?.exact === "string" && a.quote.exact.length > 0 && /^#[0-9a-fA-F]{6}$/.test(a.color) && Number.isInteger(a.position?.start) && a.position.start >= 0 && Number.isInteger(a.position.end) && a.position.end > a.position.start && a.position.unit === "unicode-codepoint" && Array.isArray(a.blockIds) && a.documentId === config.documentId;
     };
     const article = root;
     const config = window.__readerConfig || { documentId: article.dataset.documentId || "", revision: 1 };
@@ -141,7 +149,7 @@
     document.head.append(style);
     window.Reader = {
       restore(items) {
-        if (!Array.isArray(items) || items.some((a) => !validate(a))) {
+        if (!Array.isArray(items) || items.some((a) => !isAnnotation(a) || a.documentId !== config.documentId)) {
           emit("READER_ERROR", { message: "Invalid annotations" });
           return;
         }

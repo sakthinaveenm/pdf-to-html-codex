@@ -1,5 +1,6 @@
 import {nodes,codepoints,codepointToUtf16,rangeAt,resolveAnchor,selectionAnchor} from './anchors';
 import type {Annotation,ReaderMessage,ReaderEventType} from './types';
+import {isAnnotation} from './types';
 declare global {interface Window {__readerInitialAnnotations?:Annotation[];Reader:ReaderAPI;ReactNativeWebView?:{postMessage:(message:string)=>void};__readerConfig?:{documentId:string;revision:number};Highlight?:new(...ranges:Range[])=>unknown}}
 interface ReaderAPI {restore:(items:Annotation[])=>void;create:(color?:string)=>Annotation|null;remove:(id:string)=>void;update:(id:string,color:string)=>void;fontSize:(size:number)=>void;theme:(dark:boolean)=>void;search:(query:string)=>number;selection:()=>Annotation|null}
 const root=document.querySelector<HTMLElement>('article');
@@ -26,9 +27,9 @@ if(root){
   }
  }
  }
- function validate(a:Annotation):boolean{return typeof a.id==='string'&&typeof a.quote?.exact==='string'&&a.quote.exact.length>0&&/^#[0-9a-fA-F]{6}$/.test(a.color)&&Number.isInteger(a.position?.start)&&a.position.start>=0&&Number.isInteger(a.position.end)&&a.position.end>a.position.start&&a.position.unit==='unicode-codepoint'&&Array.isArray(a.blockIds)&&a.documentId===config.documentId;}
+
  window.Reader={
- restore(items){if(!Array.isArray(items)||items.some(a=>!validate(a))){emit('READER_ERROR',{message:'Invalid annotations'});return;}annotations=items;paint();},
+ restore(items){if(!Array.isArray(items)||items.some(a=>!isAnnotation(a)||a.documentId!==config.documentId)){emit('READER_ERROR',{message:'Invalid annotations'});return;}annotations=items;paint();},
  selection(){return selectionAnchor(article,config.documentId,config.revision)||pending;},
  create(color='#ffdf70'){const a=window.Reader.selection();if(!a||!/^#[0-9a-fA-F]{6}$/.test(color))return null;a.color=color;annotations.push(a);paint();pending=null;emit('HIGHLIGHT_CREATED',{annotation:a});return a;},
  remove(id){annotations=annotations.filter(a=>a.id!==id);paint();emit('HIGHLIGHT_REMOVED',{id});},

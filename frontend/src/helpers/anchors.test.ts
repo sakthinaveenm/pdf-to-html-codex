@@ -8,5 +8,5 @@ describe('Unicode anchors',()=>{
  const a:Annotation={id:'test',documentId:'d',revision:1,blockIds:['b'],quote:{exact:'தமிழ்',prefix:'hello ',suffix:'!'},position:{start:6,end:11,unit:'unicode-codepoint'},color:'#ffdf70',status:'resolved'};
  it('reanchors after editing',()=>expect(resolveAnchor(a,'new hello தமிழ்!',2).position.start).toBe(10));
  it('does not guess between repeated quotes',()=>expect(resolveAnchor({...a,quote:{exact:'word',prefix:'',suffix:''}},'word word',2).status).toBe('unresolved'));
- it('validates bridge envelopes',()=>{expect(parseMessage('{"version":2,"type":"READER_READY","payload":{}}')).toBeNull();expect(parseMessage('{"version":1,"type":"READER_READY","payload":{}}')?.type).toBe('READER_READY');});
+ it('validates bridge envelopes',()=>{expect(parseMessage('{"version":2,"type":"READER_READY","payload":{}}')).toBeNull();expect(parseMessage('{"version":1,"type":"READER_READY","payload":{"documentId":"d","revision":1}}')?.type).toBe('READER_READY');});
 });
